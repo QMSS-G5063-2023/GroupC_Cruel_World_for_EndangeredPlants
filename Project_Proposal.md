@@ -33,7 +33,7 @@ We hope to use a combination of the below datasets to explore the questions and 
 
 **Visualization:**
 
-Interactive Global Maps
-Network Analysis Charts
-Time-Series Charts
+Interactive Global Maps,
+Network Analysis Charts,
+Time-Series Charts,
 Heat map
