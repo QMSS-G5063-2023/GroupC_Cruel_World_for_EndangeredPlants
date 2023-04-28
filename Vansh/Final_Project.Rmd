@@ -1,0 +1,117 @@
+---
+title: "Final Project"
+author: "Vansh Murad Kalia"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+
+#GBIF.org (26 April 2023) GBIF Occurrence Download  https://doi.org/10.15468/dl.rdgqkv
+#0195350-230224095556074
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+#install.packages("ggmap")
+#install.packages("stringr")
+#install.packages("viridis")
+
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(ggmap)
+library(stringr)
+library(viridis)
+library(mapdata)
+
+data <- read.csv("IUCN_final.csv")
+
+data <- data.frame(data)
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+data_2000 <- data%>%
+  filter(year == "2000")
+
+
+us <- map_data("usa")
+data %>% glimpse()
+
+map1 <- ggplot() +
+  geom_point(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude), alpha = .05)
+
+map2 <- ggplot(us, aes(x = long, y = lat, group = group)) +
+  geom_polygon()
+
+map3 <- ggplot() +
+  stat_density2d(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..),
+                 geom = 'tile', contour = F)
+
+
+ggplot() +
+  geom_polygon(data = us, aes(x = long, y = lat, group = group)) + xlim(-130,-60) + 
+  scale_fill_viridis(option = 'inferno') +
+  stat_density2d(data = data_2000, 
+                 aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..), 
+                 geom = 'tile', contour = FALSE, alpha = 0.5)
+
+
+
+#USA_gbif <- occ_download_get(key = "0195350-230224095556074", overwrite = TRUE) 
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{plot}
+ggplot() +
+  stat_density2d(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..),
+                 geom = 'tile', contour = F)
+
+```
+
+
+```{2}
+
+ 
+
+```
+
+
+```{3}
+
+ 
+
+```
+
+
+```{4}
+
+ 
+
+```
+
+
+
+```{5}
+
+ 
+
+```
