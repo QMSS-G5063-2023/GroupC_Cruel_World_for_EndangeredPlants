@@ -8,8 +8,6 @@ output: html_document
 ```{r setup, include=FALSE}
 #knitr::opts_chunk$set(echo = TRUE)
 
-#GBIF.org (26 April 2023) GBIF Occurrence Download  https://doi.org/10.15468/dl.rdgqkv
-#0195350-230224095556074
 ```
 
 ## R Markdown
@@ -36,8 +34,12 @@ data <- read.csv("IUCN_final.csv")
 
 data <- data.frame(data)
 
+data <- data[c(1:51)]
 
+data_cleaned <- data%>%
+  filter(year >= 2000)
 
+glimpse(data_cleaned)
 ```
 
 ## Including Plots
@@ -53,23 +55,23 @@ data_2000 <- data%>%
 us <- map_data("usa")
 data %>% glimpse()
 
-map1 <- ggplot() +
-  geom_point(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude), alpha = .05)
+#map1 <- ggplot() +
+ # geom_point(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude), alpha = .05)
 
-map2 <- ggplot(us, aes(x = long, y = lat, group = group)) +
-  geom_polygon()
+#map2 <- ggplot(us, aes(x = long, y = lat, group = group)) +
+ # geom_polygon()
 
-map3 <- ggplot() +
-  stat_density2d(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..),
-                 geom = 'tile', contour = F)
+#map3 <- ggplot() +
+ # stat_density2d(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..),
+  #               geom = 'tile', contour = F)
 
 
-ggplot() +
-  geom_polygon(data = us, aes(x = long, y = lat, group = group)) + xlim(-130,-60) + 
-  scale_fill_viridis(option = 'inferno') +
-  stat_density2d(data = data_2000, 
-                 aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..), 
-                 geom = 'tile', contour = FALSE, alpha = 0.5)
+#ggplot() +
+ # geom_polygon(data = us, aes(x = long, y = lat, group = group)) + xlim(-130,-60) + 
+  #scale_fill_viridis(option = 'inferno') +
+  #stat_density2d(data = data_2000, 
+   #              aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..), 
+    #             geom = 'tile', contour = FALSE, alpha = 0.5)
 
 
 
@@ -80,38 +82,171 @@ ggplot() +
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 
-```{plot}
-ggplot() +
-  stat_density2d(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..),
-                 geom = 'tile', contour = F)
+```{r plot1}
+
+
+
 
 ```
 
 
-```{2}
+```{r 2}
+p <- ggplot() +
+  geom_polygon(data = us, aes(x = long, y = lat)) + 
+  xlim(-130,-60) +
+  geom_point(data = data_cleaned, aes(x = decimalLongitude, y = decimalLatitude, group = year, color = iucn_category), size = 0.25) +
+  scale_color_manual(name = "IUCN Category", 
+                     values = pal, 
+                     labels = paste(levels(data_cleaned$iucn_category), ": ", pal),
+                     guide = guide_legend(override.aes = list(size = 5))) +
+  coord_fixed() +
+  theme_void() +
+  transition_time(year) +
+  ease_aes('linear') +
+  labs(title = "Title of Animated Chart")
 
- 
+p
+
+animate(p)
+
 
 ```
 
 
-```{3}
+```{r 3}
 
- 
+boolColors <- as.character(c("EX"="#BD0026", "CR"="#F03B20", "EN" = "#FD8D3C","VU" = "#FECC5C", "NT" = "#FFFFB2"))
+boolScale <- scale_colour_manual(name="iucn_category", values=boolColors)
+
+
+p <- ggplot() +
+  geom_polygon(data = us, aes(x = long, y = lat)) + 
+  xlim(-130,-60) +
+  geom_point(data = data_cleaned, aes(x = decimalLongitude, y = decimalLatitude, group = year,
+                                      color = iucn_category), size = 0.25, breaks = c("EX", "CR", "EN","VU","NT"), values=c("#BD0026", "#F03B20", "#FD8D3C","#FECC5C","#FFFFB2" )) + boolScale +
+                    scale_color_manual(name = "IUCN Category", 
+                     values = pal, 
+                     guide = guide_legend(override.aes = list(size = 5))) +
+  coord_fixed() +
+  theme_void() +
+  transition_time(year) +
+  ease_aes('linear') +
+  labs(title = "Years 2000-2022")
+
+
+anim <- animate(p)
+
+anim_save("animated_chart.gif", anim)
 
 ```
 
 
-```{4}
+```{r 4}
 
- 
+species <- data_cleaned %>%
+  group_by(species)%>%
+  count(species)
+
+species <- species %>%
+  arrange(desc(n))
+species
+
+#install.packages('dotenv')
+library(dotenv)
+library(jsonlite)
+library(tidyverse)
+library(lubridate)
+
+
+# Set your API key and endpoint
+api = "oGuqVbtof8x1n86bcIaRanwuFsgm6Hpd"
+
+library(jsonlite)
+#################################################################################
+####            function - search news article with API                      ####
+nytime = function (keyword,begin_year,end_year) {
+  searchQ = URLencode(keyword)
+  url = paste('http://api.nytimes.com/svc/search/v2/articlesearch.json?q=',searchQ,
+              '&begin_date=',begin_year,'0101&end_date=',end_year,'1231&api-key=',api,sep="")
+  #get the total number of search results
+  initialsearch = fromJSON(url,flatten = T)
+  maxPages = round((initialsearch$response$meta$hits / 10)-1)
+  
+  #try with the max page limit at 10
+  maxPages = ifelse(maxPages >= 99, 99, maxPages)
+  
+  #creat a empty data frame
+  df = data.frame(id=as.numeric(),created_time=character(),snippet=character(),
+                  headline=character())
+  
+  #save search results into data frame
+  for(i in 0:maxPages){
+    #get the search results of each page
+    nytSearch = fromJSON(paste0(url, "&page=", i), flatten = T) 
+    temp = data.frame(id=1:nrow(nytSearch$response$docs),
+                      created_time = nytSearch$response$docs$pub_date,
+                      snippet = nytSearch$response$docs$snippet,
+                      headline = nytSearch$response$docs$headline.main)
+    df=rbind(df,temp)
+    Sys.sleep(12) #sleep for 12 second
+  }
+  return(df)
+}
+
+
+japanese_zelkova = nytime('\"japanese zelkova\"',2000,2022)
+green_ash = nytime('\"green ash\"',2000,2022)
+ginkgo_2 = nytime('\"ginkgo \"',2000,2022)
+eastern_hemlock = nytime('\"eastern hemlock\"',2000,2022)
+american_elm = nytime('\"american elm\"',2000,2022)
+
+
+```
+
+```{r 6}
+library(lubridate)
+
+# Create a sample dataframe with a datetime column
+
+# Extract the year from the datetime column and store it in a new column
+japanese_zelkova$year <- substr(japanese_zelkova$created_time, 1, 4)
+japanese_zelkova$scientific_name <- "Japanese Zelkova"
+
+green_ash$year <- substr(green_ash$created_time, 1, 4)
+green_ash$scientific_name <- "Green Ash"
+
+ginkgo_2$year <- substr(ginkgo_2$created_time, 1, 4)
+ginkgo_2$scientific_name <- "Ginkgo"
+
+eastern_hemlock$year <- substr(eastern_hemlock$created_time, 1, 4)
+eastern_hemlock$scientific_name <- "Eastern Hemlock"
+
+american_elm$year <- substr(american_elm$created_time, 1, 4)
+american_elm$scientific_name <- "American Elm"
+
+NLP <- rbind(japanese_zelkova, green_ash, ginkgo_2, eastern_hemlock, american_elm)
+
+NLP_cleaned <- NLP %>%
+  group_by(year, scientific_name)%>%
+  count()
+
+NLP_cleaned
+
+
 
 ```
 
 
+```{r 5}
 
-```{5}
+library(ggplot2)
 
- 
+NLP_cleaned$year = as.numeric(as.character(NLP_cleaned$year))
+
+chart1 <- ggplot(data = NLP_cleaned) +
+  geom_line(aes(x = year, y = n, colour = scientific_name, group = scientific_name)) + geom_smooth(aes(x = year, y = n), method = lm) + labs( x = 'Year', y = "Total Number of Article Mentions", color = "Scientific Name") + theme_minimal() + ggtitle("Yearly mentions of top 5 observed endangered species in NY Times") + theme(plot.title = element_text(size = 10, face = "bold")) +     scale_x_continuous(breaks=seq(2000, 2022, 5)) + ggeasy::easy_center_title()
+
+chart1
+
 
 ```
