@@ -40,7 +40,7 @@ library(ggmap)
 library(osmdata)
 library(plotly)
 
-
+### Importing Code
 endangered_species_og <- read.csv('../data/IUCN_final.csv')
 
 ```
@@ -240,6 +240,7 @@ leaflet() %>%
 ### Merging spatial dataframes
 merged_spdf <- st_join(endangered_sf, us_sf, join = st_within, left = TRUE)
 
+
 ### Splitting point data into latitude and longitude columns
 merged_spdf[c('long', 'lat')] <- str_split_fixed(merged_spdf$geometry, ' ', 2)
 
@@ -284,20 +285,23 @@ ui <- fluidPage(
               sep = "",
               ticks = FALSE,
               animate = TRUE),
-  plotOutput("heatmap")
-)
+  plotOutput("heatmap"))
 
 server <- function(input, output, session){
+  
   time <- reactive(input$selectedyear)
+  animationOptions(interval = 2000, loop = FALSE)
   
   output$heatmap <- renderPlot({
-  us_map = get_stamenmap(us, zoom = 3, maptype = "toner-lite")
-  map = ggmap(us_map, extent = "device", legend = "topleft")
+    
+  us <- c(left = -125, bottom = 25.75, right = -67, top = 49)
+  
+  us_map = get_stamenmap(bbox = us, zoom = 5, maptype = 'toner-lite')
 
-  ggmap(us_map) +
-  stat_density_2d_filled(data = subset(endangered_sf, year == time()), aes(x = lon, y = lat, fill = after_stat(density)),
-                         geom = 'polygon', alpha = .5, contour_var = 'density') +
-    scale_fill_continuous(type = hcl.colors(5, "fall"))
+  ggmap(us_map) + 
+    stat_density_2d_filled(data = subset(endangered_sf, year == time()), 
+                           aes(x = lon, y = lat, fill = after_stat(level)),
+                           geom = 'polygon', alpha = .5, contour_var = 'density') 
 })
   
 }
@@ -307,7 +311,14 @@ shinyApp(ui = ui, server = server)
 
 
 ```
-
+```{r}
+  ggmap(us_map) + 
+    stat_density_2d_filled(data = subset(endangered_sf, year == 2010), 
+                           aes(x = lon, y = lat, fill = after_stat(level)),
+                           geom = 'polygon', alpha = .5, contour_var = 'density') 
+```
+  
+  map = ggmap(us_map, extent = "device", legend = "topleft")
 
 
 
@@ -357,7 +368,7 @@ merged_spdf <- merged_spdf %>%
 
 ### Cleaning na_df
 na_df <- na_df %>%
-  select(species, scientificName, year, iucn_category, geometry, long, lat)
+  select(species, scientificName, year, iucn_category, geometry, lon, lat)
 
 ### Rejoining with overlap
 coastal_merge <- st_join(na_df, us_sf, join = st_is_within_distance, dist = 22224, left = TRUE)
