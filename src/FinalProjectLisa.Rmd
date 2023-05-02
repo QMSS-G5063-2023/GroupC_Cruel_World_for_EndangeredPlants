@@ -1,0 +1,444 @@
+---
+title: "Final"
+author: "Lisa Carle"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+### Importing packages and Reading in Data
+library(tidyverse)
+library(tm)
+library(quanteda)
+library(tidytext)
+library(readr)
+library(dplyr)
+library(devtools)
+library(rgdal)
+library(stringr)
+library(ggmap)
+library(readr)
+library(RColorBrewer)
+library(htmlwidgets)
+library(leaflet)
+library(ggplot2)
+library(plotly)
+library(usmap)
+library(colorspace)
+library(leafgl)
+library(sf)
+library(spatialEco)
+library(shiny)
+library(geojsonio)
+library(colourvalues)
+library(rgeos)
+library(ggmap)
+library(osmdata)
+library(plotly)
+
+
+endangered_species_og <- read.csv('../data/IUCN_final.csv')
+
+```
+
+```{r}
+### Cleaning dataframe for points exclusively in mainland US
+endangered_species <- endangered_species_og %>%
+  filter(between(abs(decimalLatitude), 24, 49) & between(abs(decimalLongitude), 66, 124)) %>%
+  filter(between(year, 2005, 2022)) %>%
+  dplyr::select(-c("X", "X.1","X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9", "X.10", "X.11", "X.12", "X.13", "X.14", "X.15", "X.16", "X.17", "X.18", "X.19", "X.20", "X.21", "X.22", "X.23", "X.24", "X.25", "X.26", "X.27", "X.28", "X.29", "X.30", "X.31", "X.32", "X.33", "X.34", "X.35", "X.36", "X.37", "X.38", "X.39", "X.40", "X.41", "X.42", "X.43", "X.44", "X.45", "X.46" ))
+```
+
+
+```{r}
+### Pulling in US Shapefile
+us_shp <- readOGR(dsn = "../data/cb_2018_us_state_500k/cb_2018_us_state_500K.shp")
+
+### Converting us_shp projection
+us_shp <- spTransform(us_shp, CRS("+init=epsg:4326"))
+
+### Converting endangered_species into sp 
+coords <- endangered_species[ ,c("decimalLongitude", "decimalLatitude")]
+data <- endangered_species [ , c("species", "scientificName", "year", "iucn_category")]
+crs <- CRS("+init=epsg:4326")
+
+endangered_spdf <- SpatialPointsDataFrame(coords = coords, data = data,
+                               proj4string = crs)
+
+endangered_spdf
+```
+
+
+```{r}
+### Exploring data
+class(endangered_species_og$decimalLatitude)
+class(endangered_species_og$decimalLongitude)
+
+names(endangered_species_og)
+
+unique(endangered_species_og$iucn_category)
+unique(endangered_species_og$taxonRank)
+
+endangered_species %>%
+  count(stateProvince)
+```
+
+
+```{r}
+### Converting endangered spdf into sf object to manipulate
+endangered_sf <- st_as_sf(endangered_spdf) 
+
+endangered_sf
+
+### Converting us_shp into sf object to join
+
+us_sf <- st_as_sf(us_shp)
+us_sf
+
+
+```
+
+```{r}
+### Establishing color palette for the IUCN Categories
+
+pal <- colorFactor(palette = c("#3C5941", "#94A37D", "#FBF2C4", "#DBA870", "#C7522B"),
+  levels = c("NT", "VU", "EN", "CR", "EX"), ordered = TRUE)
+
+
+color_iucn <- pal(endangered_sf$iucn_category)
+
+content <- paste("Species:", endangered_sf$species, "<br/>",
+                 "IUCN Category:", endangered_sf$iucn_category)
+
+```
+
+
+```{r}
+
+ui <- fluidPage(
+  sliderInput(inputId = "selectedyear", 
+              label = "Year",
+              value = 18, min = 2005, max = 2022,
+              sep = "",
+              ticks = FALSE, 
+              animate = TRUE),
+  leafletOutput("mymap")
+)
+### Creating point data of endangered species layered by year, distinguished by IUCN category
+server <- function(input, output, session) {
+  
+  points <- reactive(input$selectedyear)
+  
+  output$mymap <- renderLeaflet({
+    leaflet() %>%
+      addTiles('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png') %>%
+      addCircles(group = "Critically Endangered",
+                  data = subset(endangered_sf, year == points() & iucn_category == "CR"),
+                 color = "#DBA870") %>%
+      addCircles(group = "Extinct",
+                  data = subset(endangered_sf, year == points() & iucn_category == "EX"),
+                  color = "#C7522B") %>%
+      addCircles(group = "Near Threatened", 
+                  data = subset(endangered_sf, year == points() & iucn_category == "NT"),
+                  color = "#3C5941") %>%
+      addCircles(group = "Vulnerable", 
+                  data = subset(endangered_sf, year == points() & iucn_category == "VU"),
+                  color = "#94A37D") %>%
+      addCircles(group = "Endangered", 
+                  data = subset(endangered_sf, year == points() & iucn_category == "EN"),
+                  color = "#FBF2C4") %>%
+      addLayersControl(overlayGroups = c("Near Threatened", "Endangered", "Endangered", "Critically Endangered", "Extinct"),
+                       position = 'topright', options = layersControlOptions(collapsed = TRUE)) %>%
+      addLegend(pal = pal, values = endangered_sf$iucn_category, title = "IUCN Category", position =("bottomright"))
+    })
+}
+
+shinyApp(ui = ui, server = server)
+
+
+
+```
+unique(subset(endangered_sf, year == 2005)
+
+```{r}
+us_polygon <- st_cast(us_sf, "POLYGON")
+
+leaflet() %>%
+      addTiles('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png') %>%
+      addGlPoints(data = na_df, popup = TRUE) %>%
+      addGlPolygons(data = us_polygon, popup = TRUE)
+
+leaflet() %>%
+      addTiles('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png') %>%
+      addGlPoints(group = "2005",
+                 data = subset(endangered_sf, year == 2005),
+                 fillcolor = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2006",
+                 data = subset(endangered_sf, year == 2006),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2007",
+                 data = subset(endangered_sf, year == 2007),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2008",
+                 data = subset(endangered_sf, year == 2008),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2009",
+             data = subset(endangered_sf, year == 2009),
+             weight = 1, color = color_iucn) %>%
+      addGlPoints(group = "2010",
+             data = subset(endangered_sf, year == 2010),
+             weight = 1, color = color_iucn) %>%
+      addGlPoints(group = "2011",
+             data = subset(endangered_sf, year == 2011),
+             weight = 1, color = color_iucn) %>%
+      addGlPoints(group = "2012",
+             data = subset(endangered_sf, year == 2012),
+             weight = 1, color = color_iucn) %>%
+      addGlPoints(group = "2013",
+                 data = subset(endangered_sf, year == 2013),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2014",
+                 data = subset(endangered_sf, year == 2014),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2015",
+                 data = subset(endangered_sf, year == 2015),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2016",
+                 data = subset(endangered_sf, year == 2016),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2017",
+                 data = subset(endangered_sf, year == 2017),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2018",
+                 data = subset(endangered_sf, year == 2018),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2019",
+                 data = subset(endangered_sf, year == 2019),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2020",
+                 data = subset(endangered_sf, year == 2020),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2021",
+                 data = subset(endangered_sf, year == 2021),
+                 color = color_iucn, popup = TRUE) %>%
+      addGlPoints(group = "2022",
+                 data = subset(endangered_sf, year == 2022),
+                 color = color_iucn, popup = TRUE) %>%
+      addLayersControl(overlayGroups = c('2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022'),
+                   options = layersControlOptions(collapsed = TRUE)) %>%
+      addLegend(pal = pal, values = endangered_sf$iucn_category, title = "IUCN Category")
+```
+
+
+```{r}
+### Creating Choropleth Map showing the count of endangered species in each state
+
+### Merging spatial dataframes
+merged_spdf <- st_join(endangered_sf, us_sf, join = st_within, left = TRUE)
+
+### Splitting point data into latitude and longitude columns
+merged_spdf[c('long', 'lat')] <- str_split_fixed(merged_spdf$geometry, ' ', 2)
+
+### Cleaning columns
+merged_spdf$long <- gsub("^c\\(", "", as.character(merged_spdf$long))
+merged_spdf$long <- gsub(",", "", as.character(merged_spdf$long))
+merged_spdf$lat <- gsub("\\)", "", as.character(merged_spdf$lat))
+
+na_df <- merged_spdf[is.na(merged_spdf$NAME), ]
+summarise(na_df)
+
+### Creating df for each Endangered Category
+CR_2005 <- merged_spdf %>%
+  filter(iucn_category == "CR" & year == 2005)
+
+NT_2005 <- merged_spdf %>%
+  filter(iucn_category == "NT" & year == 2005)
+
+
+
+heatmap <- ggmap(get_stamenmap(us, zoom = 5) +
+  stat_density2d(data = NT_2005, aes(longitude = long, latitude = lat, fill = ..level..),
+                 geom = 'polygon', alpha = .42) +
+  scale_fill_gradient(low = "blue", high = 'red', guide = 'none'))
+
+heatmap
+
+endangered_sf$lon <- unlist(map(endangered_sf$geometry, 1))
+endangered_sf$lat <- unlist(map(endangered_sf$geometry, 2))
+
+
+  
+```
+
+```{r}
+###SHINY HEATMAP
+
+ui <- fluidPage(
+  sliderInput(inputId = "selectedyear", 
+              label = "Year",
+              value = 18, min = 2005, max = 2022,
+              sep = "",
+              ticks = FALSE,
+              animate = TRUE),
+  plotOutput("heatmap")
+)
+
+server <- function(input, output, session){
+  time <- reactive(input$selectedyear)
+  
+  output$heatmap <- renderPlot({
+  us_map = get_stamenmap(us, zoom = 3, maptype = "toner-lite")
+  map = ggmap(us_map, extent = "device", legend = "topleft")
+
+  ggmap(us_map) +
+  stat_density_2d_filled(data = subset(endangered_sf, year == time()), aes(x = lon, y = lat, fill = after_stat(density)),
+                         geom = 'polygon', alpha = .5, contour_var = 'density') +
+    scale_fill_continuous(type = hcl.colors(5, "fall"))
+})
+  
+}
+
+shinyApp(ui = ui, server = server)
+
+
+
+```
+
+
+
+
+  checkboxGroupInput(inputId = 'extinction_level',
+                     label = "Extinction Risk Category",
+                     choiceNames = list("Extinct", "Critically Endangered", "Endangered", "Vulnerable", "Near Threatned"),
+                     choiceValues = list("EX", "CR", "EN", "VU", "NT")),
+                     
+  level <- reactive(input$extinction_level)
+
+```{r}
+fig <- merged_spdf
+fig <- fig %>%
+  plot_ly(
+    type = 'densitymapbox',
+    lat = ~lat,
+    lon = ~long,
+    coloraxis = 'coloraxis',
+    radius = 1) 
+fig <- fig %>%
+  layout(
+    mapbox = list(
+      style="stamen-terrain",
+      center= list(lon=-90, lat = 75)), coloraxis = list(colorscale = "Viridis"))
+
+fig
+```
+```{r}
+### There are 6000 observations that did not overlap over state borders, but when I map it I can see that these are coastal/bordering observations. 
+
+### df of nonoverlap observations
+na_df <- merged_spdf[is.na(merged_spdf$NAME), ]
+
+us_polygon <- st_cast(us_sf, "POLYGON")
+
+### plotting those observations with state polygons
+leaflet() %>%
+      addTiles('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png') %>%
+      addGlPoints(data = na_df, popup = TRUE) %>%
+      addGlPolygons(data = us_polygon, popup = TRUE)
+
+### According to google international waters are 200 feet from the shore of a country, so going to merge the outstanding observations based on that.
+
+### First removing the NA values from the original df
+merged_spdf <- merged_spdf %>%
+  drop_na()
+
+### Cleaning na_df
+na_df <- na_df %>%
+  select(species, scientificName, year, iucn_category, geometry, long, lat)
+
+### Rejoining with overlap
+coastal_merge <- st_join(na_df, us_sf, join = st_is_within_distance, dist = 22224, left = TRUE)
+coastal_merge <- coastal_merge %>%
+  drop_na()
+
+### Aggregating data based on state, broken out by year, and IUCN category
+aggregated_spdf <- merged_spdf %>%
+  group_by(iucn_category, year, NAME) %>%
+  summarise(n = n())
+
+
+aggregated_coastal <- coastal_merge %>%
+  group_by(iucn_category, year, NAME) %>%
+  summarise(n = n())
+
+### binding two df
+aggregated_sf <- rbind(aggregated_spdf, aggregated_coastal)
+
+### Aggregate once more
+aggregated_sf <- aggregated_sf %>%
+  group_by(year, NAME) %>%
+  summarise(total_count = sum(n))
+
+class(aggregated_sf)
+
+aggregated_count <- aggregated_sf %>%
+  st_drop_geometry()
+
+```
+
+```{r}
+### Creating Choropleth Map
+
+### Merging US Polygons with aggregated data 
+aggregated_shp <- merge(us_polygon, aggregated_count, all.x = TRUE)
+
+simplemap <- aggregated_sf %>%
+  ggplot(aes(fill = total_count)) +
+  geom_sf()
+
+simplemap
+
+
+
+
+```
+
+```{r}
+qpal <- colorBin(palette = "GnBu", aggregated_shp$total_count, bins = 7, na.color = "white")
+qcolor <- qpal(aggregated_shp$total_count)
+
+### Shiny Choropleth Map
+
+ui <- fluidPage(
+  selectInput(inputId = 'year',
+              label = "Year", 
+              choices = 2005:2022,
+              selected = 2005),
+  leafletOutput('mymap'))
+
+server <- function(input, output, session) {
+  
+  points <- reactive(input$year)
+  
+  output$mymap <- renderLeaflet ({
+    leaflet() %>%
+  addTiles('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png') %>%
+  addPolygons(data = subset(aggregated_shp, year == points()), 
+              stroke = TRUE, weight = 1, color ='white',
+              smoothFactor = .6, opacity = 1, fillColor = qcolor,
+              fillOpacity = 1,
+              popup = paste("State:", aggregated_shp$NAME, "<br/>", 
+                            "YEAR:", aggregated_shp$year, "<br/>", 
+                            "Count of Observations:", aggregated_shp$total_count)) %>%
+      addLegend(pal = qpal, values = aggregated_shp$total_count, opacity = .7, title = "Total Count of Endangered Species Observations",
+                position = 'bottomright')
+  })
+  
+}
+
+shinyApp(ui = ui, server = server)
+```
+
