@@ -7,7 +7,11 @@
 
 - Group title: Group_C_Cruel_World_for_EndangeredPlants
 
+
+## Project
+
 - Brief description: The “Cruel World for Endangered Plants” data visualization project aims to highlight the state of endangered plants around the United States. The project seeks to provide a comprehensive view of the current state of endangered plants and the government efforts in place. Through a variety of charts, graphs, and maps, the project visualizes data on plant population trends, habitat loss, causes of endangerment, hotspots of endangered species and etc. By presenting the data in a visually engaging format, we hope to raise awareness about the urgent need to protect endangered plant species and their habitats.
+
 
 - Our Final Outputs:
 1. [`Process Book`](Lisa to insert link) <- lisa to link
@@ -15,6 +19,7 @@
 3. [`Data`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/tree/main/Final/cleaned_data) 
 4. [`Code`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/Final/Final_1.Rmd)
 5. [`Final Presentation`](https://youtu.be/XBb9lB_NzEE)
+
 
 ## Data Description
 
