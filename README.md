@@ -48,7 +48,7 @@ There are 6 datasets used:
 
 |  Name   | E-mail  |
 |  ---   | ---  |
-| Raina Cheung | rc3511@columbia.eduad4056@columbia.edu |
+| Raina Cheung | rc3511@columbia.edu |
 |  Anni Dai   | ad4056@columbia.edu  |
 |  Vansh Murad Kalia  | vansh.kalia@columbia.edu  |
 | Lisa Carle Yoko | lyc2121@columbia.edu |
