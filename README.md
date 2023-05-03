@@ -10,7 +10,7 @@
 
 ## Project
 
-- Brief description: The “Cruel World for Endangered Plants” data visualization project aims to highlight the state of endangered plants around the United States. The project seeks to provide a comprehensive view of the current state of endangered plants and the government efforts in place. Through a variety of charts, graphs, and maps, the project visualizes data on plant population trends, habitat loss, causes of endangerment, hotspots of endangered species and etc. By presenting the data in a visually engaging format, we hope to raise awareness about the urgent need to protect endangered plant species and their habitats.
+The “Cruel World for Endangered Plants” data visualization project aims to highlight the state of endangered plants around the United States. The project seeks to provide a comprehensive view of the current state of endangered plants and the government efforts in place. Through a variety of charts, graphs, and maps, the project visualizes data on plant population trends, habitat loss, causes of endangerment, hotspots of endangered species and etc. By presenting the data in a visually engaging format, we hope to raise awareness about the urgent need to protect endangered plant species and their habitats.
 
 
 - Our Final Outputs:
