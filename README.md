@@ -3,7 +3,7 @@
 
 ## Introduction
 
-- Group C: Anni Dai, Lisa Yoko Carle, Raina Cheung, Vansh Murad Kalia.
+- Group C: Lisa Yoko Carle, Raina Cheung, Anni Dai, Vansh Murad Kalia.
 
 - Group title: Group_C_Cruel_World_for_EndangeredPlants
 
@@ -48,7 +48,7 @@ There are 6 datasets used:
 
 |  Name   | E-mail  |
 |  ---   | ---  |
-| Raina Cheung | rc3511@columbia.edu |
-|  Anni Dai   | ad4056@columbia.edu  |
-|  Vansh Murad Kalia  | vansh.kalia@columbia.edu  |
-| Lisa Carle Yoko | lyc2121@columbia.edu |
+|  Lisa Yoko Carle | lyc2121@columbia.edu |
+|  Raina Cheung   | rc3511@columbia.edu  |
+|  Anni Dai  | ad4056@columbia.edu  |
+|  Vansh Murad Kalia  | vansh.kalia@columbia.edu |
