@@ -5,7 +5,7 @@
 
 - Group C: Lisa Carle, Raina Cheung, Anni Dai, Vansh Murad Kalia.
 
-- Group title: Group_C_Cruel_World_for_EndangeredPlants
+- Group title: Cruel World for Endangered Plants
 
 
 ## Project
