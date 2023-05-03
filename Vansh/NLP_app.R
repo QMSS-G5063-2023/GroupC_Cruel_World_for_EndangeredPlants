@@ -7,9 +7,6 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shiny)
-library(ggplot2)
-
 # Define UI
 ui <- fluidPage(
   titlePanel("Yearly mentions of top 5 observed endangered species in NY Times"),
@@ -37,7 +34,7 @@ server <- function(input, output) {
     # Create smoother curves on lines
     chart1 <- ggplot(data = filtered_data()) +
       geom_smooth(aes(x = year, y = n, colour = scientific_name), method = "loess", se = FALSE) +
-      labs(x = 'Year', y = "Total Number of Article Mentions",) +
+      labs(x = 'Year', y = "Total Number of Article Mentions", color = "Species' Common Name") +
       theme_minimal() +
       scale_x_continuous(breaks=seq(2000, 2022, 5)) +
       ggtitle("Yearly mentions of top 5 observed endangered species in NY Times") +

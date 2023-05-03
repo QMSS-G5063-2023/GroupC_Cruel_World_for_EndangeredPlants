@@ -26,9 +26,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyverse)
 library(ggmap)
-library(stringr)
-library(viridis)
-library(mapdata)
+
 
 data <- read.csv("IUCN_final.csv")
 
@@ -37,47 +35,13 @@ data <- data.frame(data)
 data <- data[c(1:51)]
 
 data_cleaned <- data%>%
-  filter(year >= 2000)
+  filter(year >= 2005)
 
 glimpse(data_cleaned)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-
-data_2000 <- data%>%
-  filter(year == "2000")
 
 
-us <- map_data("usa")
-data %>% glimpse()
-
-#map1 <- ggplot() +
- # geom_point(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude), alpha = .05)
-
-#map2 <- ggplot(us, aes(x = long, y = lat, group = group)) +
- # geom_polygon()
-
-#map3 <- ggplot() +
- # stat_density2d(data = data_2000, aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..),
-  #               geom = 'tile', contour = F)
-
-
-#ggplot() +
- # geom_polygon(data = us, aes(x = long, y = lat, group = group)) + xlim(-130,-60) + 
-  #scale_fill_viridis(option = 'inferno') +
-  #stat_density2d(data = data_2000, 
-   #              aes(x = decimalLongitude, y = decimalLatitude, fill = ..density..), 
-    #             geom = 'tile', contour = FALSE, alpha = 0.5)
-
-
-
-#USA_gbif <- occ_download_get(key = "0195350-230224095556074", overwrite = TRUE) 
-
-```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
@@ -91,29 +55,14 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 
 ```{r 2}
-p <- ggplot() +
-  geom_polygon(data = us, aes(x = long, y = lat)) + 
-  xlim(-130,-60) +
-  geom_point(data = data_cleaned, aes(x = decimalLongitude, y = decimalLatitude, group = year, color = iucn_category), size = 0.25) +
-  scale_color_manual(name = "IUCN Category", 
-                     values = pal, 
-                     labels = paste(levels(data_cleaned$iucn_category), ": ", pal),
-                     guide = guide_legend(override.aes = list(size = 5))) +
-  coord_fixed() +
-  theme_void() +
-  transition_time(year) +
-  ease_aes('linear') +
-  labs(title = "Title of Animated Chart")
 
-p
-
-animate(p)
 
 
 ```
 
 
 ```{r 3}
+library(gganimate)
 
 boolColors <- as.character(c("EX"="#BD0026", "CR"="#F03B20", "EN" = "#FD8D3C","VU" = "#FECC5C", "NT" = "#FFFFB2"))
 boolScale <- scale_colour_manual(name="iucn_category", values=boolColors)
@@ -133,6 +82,7 @@ p <- ggplot() +
   ease_aes('linear') +
   labs(title = "Years 2000-2022")
 
+p
 
 anim <- animate(p)
 
@@ -194,11 +144,11 @@ nytime = function (keyword,begin_year,end_year) {
 }
 
 
-japanese_zelkova = nytime('\"japanese zelkova\"',2000,2022)
-green_ash = nytime('\"green ash\"',2000,2022)
-ginkgo_2 = nytime('\"ginkgo \"',2000,2022)
-eastern_hemlock = nytime('\"eastern hemlock\"',2000,2022)
-american_elm = nytime('\"american elm\"',2000,2022)
+japanese_zelkova = nytime('\"japanese zelkova\"',2005,2022)
+green_ash = nytime('\"green ash\"',2005,2022)
+ginkgo_2 = nytime('\"ginkgo \"',2005,2022)
+eastern_hemlock = nytime('\"eastern hemlock\"',2005,2022)
+american_elm = nytime('\"american elm\"',2005,2022)
 
 
 ```
@@ -247,6 +197,16 @@ chart1 <- ggplot(data = NLP_cleaned) +
   geom_line(aes(x = year, y = n, colour = scientific_name, group = scientific_name)) + geom_smooth(aes(x = year, y = n), method = lm) + labs( x = 'Year', y = "Total Number of Article Mentions", color = "Scientific Name") + theme_minimal() + ggtitle("Yearly mentions of top 5 observed endangered species in NY Times") + theme(plot.title = element_text(size = 10, face = "bold")) +     scale_x_continuous(breaks=seq(2000, 2022, 5)) + ggeasy::easy_center_title()
 
 chart1
+
+
+```
+
+
+```{r 8, echo = FALSE}
+
+
+
+
 
 
 ```
