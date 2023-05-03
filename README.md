@@ -23,7 +23,7 @@ The “Cruel World for Endangered Plants” data visualization project aims to h
 
 ## Data Description
 
-We used ['GBIF'](https://www.gbif.org/occurrence/search) to get data on plant species observations and converted it into a csv for our use. The csv is saved in this directory as IUCN_final and linked below. We further used a collection of different government agencies to collect total acres receiving conservation each year by different programs, total acres receiving conservation in 2022 and the practice count applied in different states, Easement Restoration trends over the years and by state, Total Obligations in millions of dollars in each year by different types of fund, total obligation of Grassland Conservation Programby year. These are saved as CSVs and defined below:
+We used ['GBIF'](https://www.gbif.org/occurrence/search) to get data on plant species observations and converted it into a csv for our use. The csv is saved in this directory as IUCN_final and linked below. We further used a collection of different government agencies to collect total acres receiving conservation each year by different programs, total acres receiving conservation in 2022 and the practice count applied in different states, easement restoration trends over the years and by state, total obligations in millions of dollars in each year by different types of fund, total obligation of Grassland Conservation Program by year. These are saved as CSVs and defined below:
 
 There are 6 datasets used:
 
