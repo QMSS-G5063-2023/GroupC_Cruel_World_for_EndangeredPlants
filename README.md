@@ -3,7 +3,7 @@
 
 ## Introduction
 
-- Group C: Lisa Yoko Carle, Raina Cheung, Anni Dai, Vansh Murad Kalia.
+- Group C: Lisa Carle, Raina Cheung, Anni Dai, Vansh Murad Kalia.
 
 - Group title: Group_C_Cruel_World_for_EndangeredPlants
 
