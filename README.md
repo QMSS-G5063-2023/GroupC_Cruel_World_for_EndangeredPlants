@@ -27,7 +27,7 @@ We used ['GBIF'](https://www.gbif.org/occurrence/search) to get data on plant sp
 
 There are 6 datasets used:
 
-| Info                  | Description |
+| Name                  | Description |
 |-------------------------------|-------------|
 | [`IUCN_final`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/data/IUCN_final.csv.zip) | Endangered Plant Specie Observations across US |
 | [`NLP_cleaned`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/Final/cleaned_data/NLP_cleaned.csv) | Cleaned data pulled from NY Times API |
