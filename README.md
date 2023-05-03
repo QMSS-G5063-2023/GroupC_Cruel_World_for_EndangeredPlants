@@ -27,6 +27,7 @@ There are __ datasets used:
 | [`IUCN_final`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/data/IUCN_final.csv.zip) | Endangered Plant Specie Observations across US |
 | [`GOVT Dataset`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/data/IUCN_final.csv.zip) | Anni to incldue |
 
+
 The IUCN contains the following columns that were of use to us:
 
 | Column Name | Data Type | Description |
@@ -36,17 +37,6 @@ The IUCN contains the following columns that were of use to us:
 | decimalLongitude   | int | Longitude of the observation |
 | year| int | Year of observation |
 | iucn_category        | character | IUCN Category of Plan endangement classification |
-
-The GOVT contains the following columns that were of use to us:
-
-| Column Name | Data Type | Description |
-|-------------|-----------|-------------|
-| species     | chr | Scientific name of plant species |
-| decimalLatitude      | int | Latitude of the observation |
-| decimalLongitude   | int | Longitude of the observation |
-| year| int | Year of observation |
-| iucn_category        | character | IUCN Category of Plan endangement classification |
-
 
 
 ## Process Book
