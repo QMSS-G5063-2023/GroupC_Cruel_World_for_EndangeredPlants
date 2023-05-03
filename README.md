@@ -14,7 +14,7 @@ The “Cruel World for Endangered Plants” data visualization project aims to h
 
 
 - Our Final Outputs:
-1. [`Process Book`](Lisa to insert link) <- TBU
+1. [`Process Book`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/ProcessBook.html)
 2. [`Project Web Site`](https://groupc-plants-endangerment.shinyapps.io/Finaldeployed/)
 3. [`Data`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/tree/main/Final/cleaned_data) 
 4. [`Code`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/Final/Final_1.Rmd)
@@ -42,7 +42,7 @@ There are 6 datasets used:
 
 
 ## Process Book
-![Process Book](ProcessBook/ProcessBook_GroupA.png) <--- TBU
+![Process Book](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/ProcessBook.html)
 
 ## Names and E-mails of all members: 
 
