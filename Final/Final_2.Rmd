@@ -543,7 +543,7 @@ acres_state
 
 > Source and Notes: <https://www.nrcs.usda.gov/resources/data-and-reports/rca-data-viewer>; Acres are "land unit acres" and represent land where practices related to a program and land use have been applied during a fiscal year; Count is the total number of practices applied for the program by land use and fiscal year.
 
-### Background and Insight: {data-width="400"}
+### Background and Insight: {data-width="200"}
 
 **Insight:**
 
