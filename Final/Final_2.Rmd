@@ -1,0 +1,695 @@
+---
+title: "Cruel World for Endangered Plants"
+output: 
+  flexdashboard::flex_dashboard:
+    social: menu
+    orientation: rows
+    vertical_layout: scroll
+    theme: simplex
+    source_code: embed
+runtime: shiny
+---
+
+```{r, include=FALSE}
+options(width = 60)
+local({
+  hook_output <- knitr::knit_hooks$get('output')
+  knitr::knit_hooks$set(output = function(x, options) {
+    if (!is.null(options$max.height)) options$attr.output <- c(
+      options$attr.output,
+      sprintf('style="max-height: %s;"', options$max.height)
+    )
+    hook_output(x, options)
+  })
+})
+```
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(dplyr)
+library(maps)
+library(tidyverse) 
+library(leaflet)
+library(readr)
+library(RColorBrewer)
+library(stringr)
+library(lubridate)
+library(rgdal)
+library(geosphere)
+library(plotly)
+library(highcharter)
+library(DT)
+library(reshape2)
+library(leaflet.minicharts)
+library(jsonlite)
+library(shiny)
+library(heatmaply)
+library(dotenv)
+library(ggmap)
+library(tm)
+library(quanteda)
+library(tidytext)
+library(devtools)
+library(htmlwidgets)
+library(usmap)
+library(colorspace)
+library(leafgl)
+library(sf)
+library(spatialEco)
+library(geojsonio)
+library(colourvalues)
+library(rgeos)
+library(osmdata)
+```
+
+```{r}
+### Importing Code
+endangered_species_og <- read.csv('/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/IUCN_final.csv')
+
+### Cleaning dataframe for points exclusively in mainland US
+endangered_species <- endangered_species_og %>%
+  filter(between(abs(decimalLatitude), 24, 49) & between(abs(decimalLongitude), 66, 124)) %>%
+  filter(between(year, 2005, 2022)) %>%
+  dplyr::select(-c("X", "X.1","X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9", "X.10", "X.11", "X.12", "X.13", "X.14", "X.15", "X.16", "X.17", "X.18", "X.19", "X.20", "X.21", "X.22", "X.23", "X.24", "X.25", "X.26", "X.27", "X.28", "X.29", "X.30", "X.31", "X.32", "X.33", "X.34", "X.35", "X.36", "X.37", "X.38", "X.39", "X.40", "X.41", "X.42", "X.43", "X.44", "X.45", "X.46" ))
+
+### Converting endangered_species into sp 
+coords <- endangered_species[ ,c("decimalLongitude", "decimalLatitude")]
+data <- endangered_species [ , c("species", "scientificName", "year", "iucn_category")]
+crs <- CRS("+init=epsg:4326")
+
+endangered_spdf <- SpatialPointsDataFrame(coords = coords, data = data,
+                               proj4string = crs)
+
+### Converting endangered spdf into sf object to manipulate
+endangered_sf <- st_as_sf(endangered_spdf) 
+
+### Breaking apart point data to long and lat columns
+endangered_sf$lon <- unlist(map(endangered_sf$geometry, 1))
+endangered_sf$lat <- unlist(map(endangered_sf$geometry, 2))
+```
+
+# Project Background {data-navmenu="About"}
+
+## Row 1 {data-height="200"}
+
+```{r}
+header_logo_ab1 <- "/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/about.jpg"
+img(
+  src = header_logo_ab1,
+  height = "200px",
+  style = "margin-top: -10px;",
+  class = "img-responsive"
+)
+```
+
+## Row 2 {data-height="800"}
+
+### Project Background
+
+**The "Cruel World for Endangered Plants" data visualization project aims to highlight the state of endangered plants around the United States. The project seeks to provide a comprehensive view of the current state of endangered plants and the government efforts in place. Through a variety of charts, graphs, and maps, the project visualizes data on plant population trends, habitat loss, causes of endangerment, hotspots of endangered species and etc. By presenting the data in a visually engaging format, we hope to raise awareness about the urgent need to protect endangered plant species and their habitats.**
+
+# Data Descriptions {data-navmenu="About"}
+
+## Row 1 {data-height="200"}
+
+```{r}
+header_logo_ab1 <- "/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/about.jpg"
+img(
+  src = header_logo_ab1,
+  height = "200px",
+  style = "margin-top: -10px;",
+  class = "img-responsive"
+)
+```
+
+## Row 2 {data-height="800"}
+
+### Data Description
+
+We used 'GBIF' to get data on plant species observations and converted it into a csv for our use. The csv is saved in this directory as IUCN_final and linked below. We further used a collection of different government agencies to collect total acres receiving conservation each year by different programs, total acres receiving conservation in 2022 and the practice count applied in different states, easement restoration trends over the years and by state, total obligations in millions of dollars in each year by different types of fund, total obligation of Grassland Conservation Program by year. There are 6 datasets used:
+
+| Name                                                                                          | Description                                                                                   |
+|:-----------------------------|:-----------------------------------------|
+| [`IUCN_final`](https://www.gbif.org/occurrence/download/0195350-230224095556074)              | Endangered Plant Specie Observations across US                                                |
+| [`NLP_cleaned`](https://developer.nytimes.com/apis)                                           | Cleaned data pulled from NY Times API                                                         |
+| [`acres_program_acres`](https://www.nrcs.usda.gov/resources/data-and-reports/rca-data-viewer) | Total acres receiving conservation each year by different programs                            |
+| [`acres_state`](https://www.nrcs.usda.gov/resources/data-and-reports/rca-data-viewer)         | Total acres receiving conservation in 2022 and the practice count applied in different states |
+| [`Restoration trend`](https://www.farmers.gov/data/easements-download)                        | The Easement Restoration trends over the years and by state                                   |
+| [`gs_type`](https://www.nrcs.usda.gov/rca-conservation-program-reports)                       | Total Obligations in millions of dollars in each year by different types of fund              |
+| [`grassland_3`](https://www.nrcs.usda.gov/rca-conservation-program-reports)                   | Total Obligation of Grassland Conservation Programby year                                     |
+
+# Processbook {data-navmenu="About"}
+
+## Row 1 {data-height="200"}
+
+```{r}
+header_logo_ab1 <- "/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/about.jpg"
+img(
+  src = header_logo_ab1,
+  height = "200px",
+  style = "margin-top: -10px;",
+  class = "img-responsive"
+)
+```
+
+## Row 2 {data-height="3000"}
+
+### Process
+
+```{r}
+header_logo_pb <- "/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/ProcessBook.jpeg"
+img(
+  src = header_logo_pb,
+  height = "2000px",
+  style = "margin-top: -10px;"
+)
+```
+
+# Authors {data-navmenu="About"}
+
+## Row 1 {data-height="200"}
+
+```{r}
+header_logo_ab1 <- "/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/about.jpg"
+img(
+  src = header_logo_ab1,
+  height = "200px",
+  style = "margin-top: -10px;",
+  class = "img-responsive"
+)
+```
+
+## Row 2 {data-height="800"}
+
+### Authors
+
+| Name              | Email                                                        |
+|:-----------------------|:-----------------------------------------------|
+| Lisa Carle        | [lyc2121\@columbia.edu](mailto:lyc2121@columbia.edu)         |
+| Raina Cheung      | [rc3511\@columbia.edu](mailto:rc3511@columbia.edu)           |
+| Anni Dai          | [ad4056\@columbia.edu](mailto:ad4056@columbia.edu)           |
+| Vansh Murad Kalia | [vansh.kalia\@columbia.edu](mailto:vansh.kalia@columbia.edu) |
+
+# Endangered Species Point Data {data-navmenu="Geographic Patterns"}
+
+## Row 1 {data-height="800"}
+
+### Endangered Species Point Data
+
+```{r, fig.height = 10}
+### Shiny Point data map
+par(mar = c(1, 1, 1, 1))
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(sliderInput(
+      inputId = "selectedyear", 
+      label = "Year",
+      value = 18, min = 2005, max = 2022,
+      sep = "",
+      ticks = FALSE, 
+      animate = TRUE)),
+      mainPanel(leafletOutput("mymap"))
+    )
+  )
+
+### Creating point data of endangered species layered by year, distinguished by IUCN category
+server <- function(input, output, session) {
+
+  ### Palette for legend
+  pal <- colorFactor(palette = c("#3C5941", "#94A37D", "#FBF2C4", "#DBA870", "#C7522B"),
+  levels = c("NT", "VU", "EN", "CR", "EX"), ordered = TRUE)
+  
+  ### Creating function out of user input
+  points <- reactive(input$selectedyear)
+  
+  ### Rendering
+  output$mymap <- renderLeaflet({
+    leaflet() %>%
+      addTiles('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png') %>%
+      setView(lng = -97.38, lat = 42.87, zoom = 3.4) %>%
+      addCircles(group = "Critically Endangered",
+                  data = subset(endangered_sf, year == points() & iucn_category == "CR"),
+                 color = "#DBA870") %>%
+      addCircles(group = "Extinct",
+                  data = subset(endangered_sf, year == points() & iucn_category == "EX"),
+                  color = "#C7522B") %>%
+      addCircles(group = "Near Threatened", 
+                  data = subset(endangered_sf, year == points() & iucn_category == "NT"),
+                  color = "#3C5941") %>%
+      addCircles(group = "Vulnerable", 
+                  data = subset(endangered_sf, year == points() & iucn_category == "VU"),
+                  color = "#94A37D") %>%
+      addCircles(group = "Endangered", 
+                  data = subset(endangered_sf, year == points() & iucn_category == "EN"),
+                  color = "#FBF2C4") %>%
+      addLayersControl(overlayGroups = c("Near Threatened", "Endangered", "Critically Endangered", "Extinct", "Vulnerable"),
+                       position = 'topright', options = layersControlOptions(collapsed = TRUE)) %>%
+      addLegend(pal = pal, values = endangered_sf$iucn_category, title = "IUCN Category", position =("bottomright"))
+    })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+> Source and Citations: GBIF.org (26 April 2023) GBIF Occurrence Download <https://doi.org/10.15468/dl.rdgqkv>
+
+### Background and Insight: {data-width="200"}
+
+**Background:** The points on this map represent observations of endangered plant species within the US between the years 2005 to 2022. Using this data to visualize the geographic locations helps us to observe trends in endangered plants species, and provides us with the possibility to compare these trends to efforts being taken to preserve plant species.
+
+**Insight:**
+
+-   This point plot shows how the number of endangered plant species has been increasing since 2005.
+
+-   We can also see that most of these species are from the coastal regions, southern regions, and north east regions. I am curious is this is because climate change has made weather patterns more intense in areas that were already more intense in seasonality.
+
+-   The map also shows us that there has been a major increase in the endangerment level of species. In 2005, there were mainly Near Threatened and Vulnerable plant species. By 2022, there are a large number more of Critically Endangered, Endangered, Near Threatened, and Vulnerable plant species.
+
+# Endangered Species Density Distribution {data-navmenu="Geographic Patterns"}
+
+## Row 1 {data-height="500"}
+
+### Endangered Species Density Distribution
+
+```{r, fig.height = 10}
+###SHINY HEATMAP
+
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(sliderInput(
+      inputId = "selectedyear", 
+      label = "Year",
+      value = 18, min = 2005, max = 2022,
+      sep = "",
+      ticks = FALSE, 
+      animate = TRUE)),
+      mainPanel(plotOutput("heatmap"))
+    )
+)
+
+### Creating density heat map of endangered species by time
+server <- function(input, output, session){
+  
+  ### Creating function out of user input
+  time <- reactive(input$selectedyear)
+  
+  ### Setting up animation speed
+  animationOptions(interval = 2000, loop = FALSE)
+  
+  output$heatmap <- renderPlot({
+  
+  ### Creating US Base map  
+  us <- c(left = -125, bottom = 25.75, right = -67, top = 49)
+  
+  us_map = get_stamenmap(bbox = us, zoom = 5, maptype = 'toner-lite')
+  
+  ### Plotting Density Map
+  ggmap(us_map) + 
+    stat_density_2d_filled(data = subset(endangered_sf, year == time()), 
+                           aes(x = lon, y = lat, fill = after_stat(level)),
+                           geom = 'polygon', alpha = .5, contour_var = 'density') 
+})
+  
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+> Source and Citations: GBIF.org (26 April 2023) GBIF Occurrence Download <https://doi.org/10.15468/dl.rdgqkv>
+
+### Background and Insight: {data-width="200"}
+
+**Insight:**
+
+-   This density distribution map showed us a much more clear picture of the regional differences in plant endangerment within the mainland United States.
+-   There was a sharp decrease in the drastic distributional differences beginning in 2015. Sadly, the density plot not being as "colorful" is not a result of endangered plant species decreasing, but rather a wider spread distrubtion of these plant species across the entire mainland. We know this from the point plot map above.
+-   However, the most dense regions of endangered species still ccome from the New York and northern California region.
+
+# Plant Endangerment
+
+## Row 1 {data-height="500"}
+
+### Endangered Plant Species by Category Over the Years
+
+```{r}
+#Get data
+plants <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/IUCN_final.csv")
+
+#stacked bar chart of categories by year
+categories <- plants %>%
+  select(iucn_category, year, stateProvince, institutionCode) %>%
+  mutate(iucn_category = recode(iucn_category,
+                                "CR" = "Critically Endangered",
+                                "EN" = "Endangered",
+                                "EX" = "Extinct",
+                                "NT" = "Near Threatened",
+                                "VU" = "Vulnerable")) %>%
+  filter(!(stateProvince %in% c("Alaska", "Hawaii"))) %>%
+  filter(between(year, 2005, 2022)) %>%
+  filter(!is.na(institutionCode)) %>%
+  filter(!is.na(year)) %>%
+  na.omit()
+
+bar <- ggplot(data = categories, aes(x = year, fill = iucn_category)) +
+                 geom_bar() +
+                 scale_fill_manual(values = rev(hcl.colors(5, 'Fall')), 
+                                   name = "IUCN category") +
+                 labs(title = "Endangered Plant Species by Category Over the Years",
+                      x = "Year",
+                      y = "Count") +
+                 theme_minimal()
+ggplotly(bar) 
+```
+
+> Source and Citations: GBIF.org (26 April 2023) GBIF Occurrence Download <https://doi.org/10.15468/dl.rdgqkv>
+
+### Background and Insight: {data-width="200"}
+
+**Insight:**
+
+-   Five International Union for Conservation of Nature (IUCN) categories were selected to describe plant species endangerment: (1) Critically Endangered; (2) Endangered; (3) Extinct; (4) Near Threatened and (5) Vulnerable.
+-   This graph displays an increasing trend of endangered plant species across all five IUCN categories over the period of 2005-2022.
+-   Key observations:Near Threatened category in 2022 has the most plant species counts Critically Endangered plant species have reached an all-time high in 2022
+
+# News Awareness
+
+## Row 1 {data-height="500"}
+
+### Yearly mentions of top 5 observed endangered species in NY Times
+
+```{r}
+#get data
+NLP_cleaned <- read.csv('/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/NLP_cleaned.csv')
+
+# Define UI
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      checkboxGroupInput("species", label = "Select species to display:",
+                         choices = unique(NLP_cleaned$scientific_name),
+                         selected = unique(NLP_cleaned$scientific_name))
+    ),
+    mainPanel(
+      plotOutput("linechart")
+    )
+  )
+)
+
+# Define server
+server <- function(input, output) {
+  
+  # Filter data based on user input
+  filtered_data <- reactive({
+    NLP_cleaned %>% filter(scientific_name %in% input$species)
+  })
+  
+  output$linechart <- renderPlot({
+    # Create smoother curves on lines
+    chart1 <- ggplot(data = filtered_data()) +
+      geom_smooth(aes(x = year, y = n, colour = scientific_name), method = "loess", se = FALSE) +
+      labs(x = 'Year', y = "Total Number of Article Mentions", color = "Species' Common Name") +
+      theme_minimal() +
+      scale_x_continuous(breaks=seq(2000, 2022, 5)) +
+      ggtitle("Yearly mentions of top 5 observed endangered species in NY Times") +
+      theme(plot.title = element_text(size = 10, face = "bold")) +
+      ggeasy::easy_center_title()
+    
+    chart1
+  })
+}
+
+# Run the app
+shinyApp(ui = ui, server = server)
+```
+
+```{r, include=FALSE}
+#Get data
+acres_program_acres <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/acres_program_acres.csv", header=TRUE, stringsAsFactors=FALSE)
+acres_state <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/acres_state.csv", header=TRUE, stringsAsFactors=FALSE)
+usa_spdf <- readOGR(dsn= "/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/us-state-boundaries.geojson")
+
+#Convert string to numeric
+acres_program_acres$Year <- as.numeric(acres_program_acres$Year)
+#Melting Data
+acres_program_acres_1 <- melt(acres_program_acres, id.vars="Year")
+```
+
+> Source and Citations: GBIF.org (26 April 2023) GBIF Occurrence Download <https://doi.org/10.15468/dl.rdgqkv>; "The New York Times."APIs." Accessed May 4, 2023. <https://developer.nytimes.com/apis>"
+
+### Background and Insight: {data-width="200"}
+
+**Insight:**
+
+-   The chart shows the number of NY Times articles that have mentioned any of the top 5 most observed endangered plant species yearly
+
+-   NLP on NY Times API shows that conventional news platform raise very little awareness on endangered plant species
+
+-   While the number of articles raising awareness over endangered plant is already low and dwindling, the number of endangered plant species keep increasing over the years
+
+# Acres Receiving Conservation Program {data-navmenu="Conservation Efforts"}
+
+## Row 1 {data-height="500"}
+
+### Acres Receiving Conservation by Program and Year
+
+```{r, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, fig.width = 12, fig.height= 20}
+#Plot
+acres_program_acres_graph <- acres_program_acres_1 %>% 
+  ggplot(aes(x = Year, y = value, col=variable)) + 
+  geom_line(aes(color = variable))+
+  geom_point(aes(color = variable))+
+  ggtitle("Acres Reciving Conservation by Program and Year")+xlab("Fiscal Year")+ylab("Acres")+
+  theme(axis.title=element_text(size=7), axis.text.x = element_text(size=5, angle = 90), plot.title=element_text(size=15, face = "bold"))+
+  theme_bw()+
+  scale_y_continuous(labels=scales::comma)
+ggplotly(acres_program_acres_graph) 
+```
+
+> Source and Notes: <https://www.nrcs.usda.gov/resources/data-and-reports/rca-data-viewer>; Acres are "land unit acres" and represent land where practices related to a program and land use have been applied during a fiscal year; Count is the total number of practices applied for the program by land use and fiscal year.
+
+### Background and Insight: {data-width="400"}
+
+**Background:** The analysis of the dataset on Acres Receiving Conservation and Government efforts in the USA can be related to the topic of endangered plants as conservation efforts often involve protecting and preserving the habitats of endangered plant species. 
+
+**Insights:**
+
+-   Based on the graph, we can see that the total acres receiving conservation through various programs has fluctuated over the years. From 2005 to 2010, the total acres receiving conservation increased steadily, with the CRP and Wetlands Reserve Program (WRP) contributing significantly to this growth.
+
+-   However, there was a decline in the total acres receiving conservation from 2010 to 2014, with a slight increase in 2015. From 2016 to 2019, the total acres receiving conservation remained relatively stable, with a slight increase in 2020 and 2021.
+
+-   The graph suggests that government efforts to conserve land have been inconsistent over the years.
+
+## Row 2 {data-height="500"}
+
+### Total Acres Receiving Conservation and Practice Applied Count by State in 2022
+
+```{r, include=FALSE}
+#Merge data
+combined <- usa_spdf@data %>%
+  left_join(acres_state, by = c(name = "Stname"))
+usa_spdf@data <- combined
+usa_spdf@data$Acres <- as.numeric(usa_spdf@data$Acres)
+usa_spdf@data$Practice_Count <- as.numeric(usa_spdf@data$Practice_Count)
+
+# Extract latitude and longitude values
+lat <- as.numeric(sub('.*?"lat":\\s*([^,}]+).*', '\\1', usa_spdf$geo_point_2d))
+lon <- as.numeric(sub('.*?"lon":\\s*([^,}]+).*', '\\1', usa_spdf$geo_point_2d))
+
+# Add latitude and longitude columns to usa_spdf@data
+usa_spdf@data$lon <- lon
+usa_spdf@data$lat <- lat
+usa_spdf@data
+```
+
+```{r, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+#Create color palette
+pal1 <- colorNumeric(
+  palette = "YlOrRd",
+  domain = usa_spdf@data$Acres)
+pal2 <- colorNumeric(
+  palette = "YlOrRd",
+  domain = usa_spdf@data$Practice_Count)
+
+
+#Create map
+acres_state <- leaflet(usa_spdf) %>%
+  setView(lng = -98.5795, lat = 39.8283, zoom = 4) %>%
+  addTiles() %>% 
+  addProviderTiles("Stamen.TonerLite") %>%
+  addPolygons(color = ~pal1(Acres), 
+              fillOpacity = 0.7, 
+              weight = 0.2, 
+              smoothFactor = 0.2,
+              popup = paste("State: ", usa_spdf@data$name, "<br>",
+                            "Total Acres Receiving Conservation: ", usa_spdf@data$Acres, " acres"),
+              group = "Total Acres Receiving Conservation") %>%
+  addCircleMarkers(data = usa_spdf@data, lng = ~lon, lat = ~lat, 
+                   radius = ~Practice_Count/50000, 
+                   color = ~pal2(Practice_Count), stroke = FALSE, fillOpacity = 0.5, 
+                   popup = paste("State: ", usa_spdf@data$name, "<br>",
+                            "Total Practice Count: ", usa_spdf@data$Practice_Count, " counts"),
+                   group = "Total Practice Count") %>%
+  addLayersControl(
+    baseGroups = c("OpenStreetMap"),
+    overlayGroups = c("Total Acres Receiving Conservation", "Total Practice Count"),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+  addLegend("topright", pal = pal1, values = ~Acres,
+    title = "Total Acres Receiving Conservation", opacity = 1)%>%
+  addLegend("bottomright", pal = pal2, values = ~Practice_Count,
+    title = "Total Practice Count", opacity = 1)
+acres_state
+```
+
+> Source and Notes: <https://www.nrcs.usda.gov/resources/data-and-reports/rca-data-viewer>; Acres are "land unit acres" and represent land where practices related to a program and land use have been applied during a fiscal year; Count is the total number of practices applied for the program by land use and fiscal year.
+
+### Background and Insight: {data-width="400"}
+
+**Insight:**
+
+-   The second graph, a choropleth map showing the total acres receiving conservation in 2022 and the practice count applied in different states with different sizes of bubbles, provides a visual representation of the distribution of conservation efforts across the United States.
+-   The map can help identify regions with higher conservation efforts and highlight areas where additional conservation efforts may be needed. Additionally, the size of the bubble in each state can provide information about the relative magnitude of the conservation efforts in that state.
+-   The map shows that Texas has the highest total acres receiving conservation as well as the highest total practice count.
+
+# Easement Restoration Program {data-navmenu="Conservation Efforts"}
+
+## Row 1 {data-height="500"}
+
+### Restoration Count by Year
+
+```{r, include=FALSE}
+#get data
+easement_restoration <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/Restoration trend.csv", header=TRUE, stringsAsFactors=FALSE)
+```
+
+```{r, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, fig.width = 12, fig.height= 20}
+# Create a Shiny app
+ui <- fluidPage(sidebarPanel(selectInput(inputId = "state",
+                                         label = "Select state:",
+                                         choices = c("All", unique(easement_restoration$STATE)),
+                                         selected = "All")),
+                mainPanel(plotlyOutput(outputId = "plot")))
+
+server <- function(input, output){
+  data_filtered <- reactive({
+    if (input$state == "All"){
+      easement_restoration %>%
+        group_by(RESTORATION_FY) %>%
+        summarise(count = sum(COUNT))
+    } else {
+      easement_restoration %>%
+        filter(STATE == input$state) %>%
+        group_by(STATE, RESTORATION_FY) %>%
+        summarise(count = sum(COUNT))
+    }
+  })
+  output$plot <- renderPlotly({
+    p <- plot_ly(data_filtered(), x = ~RESTORATION_FY, y = ~count, type = 'bar')
+    p <- layout(p, title = "Restoration Count by Year and State",
+                xaxis = list(title = "Year"),
+                yaxis = list(title = "Total Count"))
+    if (input$state != "All"){
+      p <- layout(p, title = paste0("Restoration Count by Year - ", input$state))
+    }
+    p
+  })
+}
+
+shinyApp(ui, server)
+```
+
+> Source: <https://www.farmers.gov/data/easements-download>
+
+### Background and Insight: {data-width="400"}
+
+**Background:** The Easement Restoration Program is a conservation program that provides financial and technical assistance to private landowners to restore and protect wetlands, grasslands, and other habitats on their property. By restoring these habitats, the program helps to protect and enhance the biodiversity of the region, which can include endangered plant species.
+
+**Insight:**
+
+-   By analyzing the restoration trends over the years and by state, we can see which regions have had the most restoration projects and how this has changed over time. This information can help identify areas that require more attention or resources to protect endangered plant species.
+
+# NRCS Resources Conservation Act (RCA) {data-navmenu="Conservation Efforts"}
+
+## Row 1 {data-height="500"}
+
+### NRCS Resources Conservation Act (RCA) Obligation by Type and Year
+
+```{r, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE}
+# get data
+rca_report <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/gs_type.csv", header=TRUE, stringsAsFactors=FALSE)
+
+#Convert string to numeric
+rca_report$year <- as.numeric(rca_report$year)
+
+#Plot
+government_spending <- highchart() %>% 
+  hc_chart(type = "column") %>%
+  hc_title(text = "NRCS Resources Conservation Act (RCA) Obligation by Type and Year") %>%
+  hc_plotOptions(column = list(stacking = "normal")) %>%
+  hc_xAxis(categories = rca_report$year) %>%
+  hc_yAxis(title = list(text = "Total Obligation (Billions of $)")) %>%
+  hc_add_series(name="Technical Assistance",
+                data = rca_report$Technical_Assistance,
+                stack = "obligation") %>%
+  hc_add_series(name="Financial Assistance",
+                data = rca_report$Financial_Assistance,
+                stack = "obligation") %>%
+  hc_add_series(name="Reimbursable",
+                data = rca_report$Reimbursable,
+                stack = "obligation") %>%
+  hc_tooltip(formatter = JS("function () {
+                              var percentage = (this.y / this.point.stackTotal) * 100;
+                              return '<b>' + this.x + '</b><br/>' +
+                              this.series.name + ': ' + Highcharts.numberFormat(this.y, 1) + ' (' + percentage.toFixed(2) + '%)<br/>' +
+                              'Total: ' + Highcharts.numberFormat(this.point.stackTotal, 1);
+                            }"))
+government_spending
+```
+
+> Source: <https://www.nrcs.usda.gov/rca-conservation-program-reports>
+
+### Background and Insight: {data-width="400"}
+
+Background: NRCS's natural resources conservation programs help people reduce soil erosion, enhance water supplies, improve water quality, increase wildlife habitat, and reduce damages caused by floods and other natural disasters. The stacked bar chart of the Total Obligations in millions of dollars in each year by different types of fund can provide insights into the government's efforts to conserve endangered plants in the USA.
+
+Insight: - Financial Assistance has consistently been the highest obligation type over the years, followed by Technical Assistance and then Reimbursable.
+
+-   The overall level of obligation has remained relatively stable over the years, with a few notable increases in Financial Assistance obligations in the mid-2010s.
+
+-   By looking at the stacked bar chart, we can see how much money the government has spent on conservation efforts each year and how much of that money is allocated. Analyzing these trends over time can provide insight into the government's priorities and how they have changed over the years.
+
+-   The chart can also show how the government is allocating its conservation funds across different types of assistance. For example, if the government is allocating more funds towards financial assistance, it may indicate that they are focusing more on providing monetary assistance to conservation efforts. On the other hand, if technical assistance is receiving more funds, it may indicate that the government is providing more support and expertise to conservation efforts.
+
+# Grassland Reserve Program {data-navmenu="Conservation Efforts"}
+
+## Row 1 {data-height="500"}
+
+### Grassland Reserve Program (GRP) Total Obligation by Year
+
+```{r, echo=FALSE, error=FALSE, message=FALSE, warning=FALSE, fig.width = 12, fig.height= 20}
+#get data
+grassland <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/Final/cleaned_data/grassland_3.csv", header=TRUE, stringsAsFactors=FALSE)
+
+# Create a non-linear trend line
+line_trend <- loess(Total ~ Year, data = grassland)
+
+# Create the highchart
+grassland_spending <- highchart() %>% 
+  hc_title(text = "Grassland Reserve Program (GRP) Total Obligation by Year") %>% 
+  hc_xAxis(categories = grassland$Year) %>% 
+  hc_yAxis(title = list(text = "Total Obligation (Millions of $)")) %>% 
+  hc_add_series(data = grassland$Total, name = "Total Obligation", type = "column") %>% 
+  hc_add_series(data = fitted(line_trend), name = "Trend Line", type = "line", color = "#ff7f0e")
+
+grassland_spending
+```
+
+> Source: <https://www.nrcs.usda.gov/rca-conservation-program-reports>
+
+### Background and Insight: {data-width="400"}
+
+**Background:** The Grassland Reserve Program (GRP) is a voluntary conservation program that emphasizes support for working grazing operations, enhancement of plant and animal biodiversity, and protection of grassland under threat of conversion to other uses. Grasslands are important habitats for many species of endangered plants, and protecting these habitats is critical for their survival.
+
+**Insight:**
+
+-   The chart shows that total obligation increased steadily from 2009 to 2010, peaked in 2010, and then declined until 2014. After 2014, total obligation fluctuated but did not reach the same peak as in 2010.
