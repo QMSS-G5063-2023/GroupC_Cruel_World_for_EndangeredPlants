@@ -17,7 +17,7 @@ The “Cruel World for Endangered Plants” data visualization project aims to h
 1. [`Process Book`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/ProcessBook.html)
 2. [`Project Web Site`](https://groupc-plants-endangerment.shinyapps.io/Finaldeployed/)
 3. [`Data`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/tree/main/Final/cleaned_data) 
-4. [`Code`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/Final/Final_2.Rmd)
+4. [`Code`](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/Final/Final_v2.Rmd)
 5. [`Final Presentation`](https://youtu.be/XBb9lB_NzEE)
 
 
