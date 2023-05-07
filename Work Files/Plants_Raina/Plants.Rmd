@@ -1,0 +1,48 @@
+---
+title: "Plants"
+output: html_document
+date: "2023-04-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+plants <- read.csv("IUCN_final.csv")
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(plotly)
+
+#stacked bar chart of categories by year
+categories <- plants %>%
+  select(iucn_category, year, stateProvince, institutionCode) %>%
+  mutate(iucn_category = recode(iucn_category,
+                                "CR" = "Critically Endangered",
+                                "EN" = "Endangered",
+                                "EX" = "Extinct",
+                                "NT" = "Near Threatened",
+                                "VU" = "Vulnerable")) %>%
+  filter(!(stateProvince %in% c("Alaska", "Hawaii"))) %>%
+  filter(between(year, 2005, 2022)) %>%
+  filter(!is.na(institutionCode)) %>%
+  filter(!is.na(year)) %>%
+  na.omit()
+
+bar <- ggplot(data = categories, aes(x = year, fill = iucn_category)) +
+                 geom_bar() +
+                 scale_fill_manual(values = rev(hcl.colors(5, 'Fall')), 
+                                   name = "IUCN category") +
+                 labs(title = "Endangered Plant Species by Category Over the Years",
+                      x = "Year",
+                      y = "Count") +
+                 theme_minimal()
+ggplotly(bar) 
+
+```
+
+

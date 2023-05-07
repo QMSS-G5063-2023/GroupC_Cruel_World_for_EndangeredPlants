@@ -1,0 +1,263 @@
+---
+title: "Group Project -- Conservation Efforts"
+author: "Anni Dai"
+date: "2023-04-29"
+output: html_document
+---
+
+# Environment Setup:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(maps)
+library(tidyverse) 
+library(leaflet)
+library(readr)
+library(RColorBrewer)
+library(stringr)
+library(lubridate)
+library(rgdal)
+library(geosphere)
+library(plotly)
+library(highcharter)
+library(DT)
+library(reshape2)
+library(leaflet.minicharts)
+library(jsonlite)
+library(shiny)
+library(heatmaply)
+library(gifski)
+library(gganimate)
+```
+
+# Part4: Conservation Efforts
+
+## 1. Acres Conservation
+
+> **Reasoning**: The analysis of the dataset on Acres Receiving Conservation and Government efforts in the USA can be related to the topic of endangered plants as conservation efforts often involve protecting and preserving the habitats of endangered plant species.
+>
+> -   Acres are "land unit acres" and represent land where practices related to a program and land use have been applied during a fiscal year.
+>
+> -   Count is the total number of practices applied for the program by land use and fiscal year.
+>
+> The first graph shows the trend in the total acres receiving conservation each year by different programs. This graph can help to identify which programs have been the most successful in conserving land in recent years, and also which programs may need more attention or resources. By tracking the changes in conservation efforts over time, it is possible to evaluate the effectiveness of these programs and identify areas where improvements can be made.
+>
+> The second graph, a choropleth map showing the total acres receiving conservation in 2022 and the practice count applied in different states with different sizes of bubbles, provides a visual representation of the distribution of conservation efforts across the United States. The map can help identify regions with higher conservation efforts and highlight areas where additional conservation efforts may be needed. Additionally, the size of the bubble in each state can provide information about the relative magnitude of the conservation efforts in that state.
+>
+> Overall, analyzing the dataset on Acres Receiving Conservation and Government efforts in the USA can provide valuable insights into the state of conservation efforts in the United States, and can help inform decisions about future conservation policies and practices.
+>
+> **Source**: <https://www.nrcs.usda.gov/resources/data-and-reports/rca-data-viewer>
+
+```{r acres data, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE}
+acres_program_acres <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/conservation effort/data source/acres_program_acres.csv", header=TRUE, stringsAsFactors=FALSE)
+acres_state <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/conservation effort/data source/acres_state.csv", header=TRUE, stringsAsFactors=FALSE)
+usa_spdf <- readOGR(dsn= "/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/conservation effort/data source/us-state-boundaries.geojson")
+```
+
+```{r acres by program in acres, echo=TRUE,warning=FALSE,message=FALSE,error=FALSE}
+#Convert string to numeric
+acres_program_acres$Year <- as.numeric(acres_program_acres$Year)
+#Melting Data
+acres_program_acres_1 <- melt(acres_program_acres, id.vars="Year")
+#Plot
+acres_program_acres_graph <- acres_program_acres_1 %>% 
+  ggplot(aes(x = Year, y = value, col=variable)) + 
+  geom_line(aes(color = variable))+
+  geom_point(aes(color = variable))+
+  ggtitle("Acres Reciving Conservation by Program and Year")+xlab("Fiscal Year")+ylab("Acres")+
+  theme(axis.title=element_text(size=7), axis.text.x = element_text(size=5, angle = 90), plot.title=element_text(size=15, face = "bold"))+
+  scale_x_continuous(breaks=seq(2005,2022,1))+
+  scale_y_continuous(labels=scales::comma)
+ggplotly(acres_program_acres_graph) 
+```
+
+```{r acres by state accumulated in 2022, echo=TRUE, error=FALSE, message=FALSE, warning=FALSE}
+#Merge data
+combined <- usa_spdf@data %>%
+  left_join(acres_state, by = c(name = "Stname"))
+usa_spdf@data <- combined
+usa_spdf@data$Acres <- as.numeric(usa_spdf@data$Acres)
+usa_spdf@data$Practice_Count <- as.numeric(usa_spdf@data$Practice_Count)
+
+# Extract latitude and longitude values
+lat <- as.numeric(sub('.*?"lat":\\s*([^,}]+).*', '\\1', usa_spdf$geo_point_2d))
+lon <- as.numeric(sub('.*?"lon":\\s*([^,}]+).*', '\\1', usa_spdf$geo_point_2d))
+
+# Add latitude and longitude columns to usa_spdf@data
+usa_spdf@data$lon <- lon
+usa_spdf@data$lat <- lat
+usa_spdf@data
+
+#Create color palette
+pal1 <- colorNumeric(
+  palette = "YlOrRd",
+  domain = usa_spdf@data$Acres)
+pal2 <- colorNumeric(
+  palette = "YlOrRd",
+  domain = usa_spdf@data$Practice_Count)
+
+
+#Create map
+acres_state <- leaflet(usa_spdf) %>%
+  setView(lng = -98.5795, lat = 39.8283, zoom = 4) %>%
+  addTiles() %>% 
+  addProviderTiles("Stamen.TonerLite") %>%
+  addPolygons(color = ~pal1(Acres), 
+              fillOpacity = 0.7, 
+              weight = 0.2, 
+              smoothFactor = 0.2,
+              popup = paste("State: ", usa_spdf@data$name, "<br>",
+                            "Total Acres Receiving Conservation: ", usa_spdf@data$Acres, " acres"),
+              group = "Total Acres Receiving Conservation") %>%
+  addCircleMarkers(data = usa_spdf@data, lng = ~lon, lat = ~lat, 
+                   radius = ~Practice_Count/50000, 
+                   color = ~pal2(Practice_Count), stroke = FALSE, fillOpacity = 0.5, 
+                   popup = paste("State: ", usa_spdf@data$name, "<br>",
+                            "Total Practice Count: ", usa_spdf@data$Practice_Count, " counts"),
+                   group = "Total Practice Count") %>%
+  addLayersControl(
+    baseGroups = c("OpenStreetMap"),
+    overlayGroups = c("Total Acres Receiving Conservation", "Total Practice Count"),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+  addLegend("topright", pal = pal1, values = ~Acres,
+    title = "Total Acres Receiving Conservation", opacity = 1)%>%
+  addLegend("bottomright", pal = pal2, values = ~Practice_Count,
+    title = "Total Practice Count", opacity = 1)
+acres_state
+
+```
+
+## 2. Easement Restoration Trend
+
+> **Reasoning**: The Easement Restoration Program is a conservation program that provides financial and technical assistance to private landowners to restore and protect wetlands, grasslands, and other habitats on their property. By restoring these habitats, the program helps to protect and enhance the biodiversity of the region, which can include endangered plant species.
+>
+> By analyzing the restoration trends over the years and by state, we can see which regions have had the most restoration projects and how this has changed over time. This information can help identify areas that require more attention or resources to protect endangered plant species. Additionally, by providing a user interface that allows users to select specific states, the Shiny app allows for a more targeted analysis of restoration trends and can help to identify regional patterns in restoration efforts.
+>
+> The easement restoration program is just one of many conservation programs and initiatives that the government has implemented to protect endangered plants in the United States. By examining these programs and the data associated with them, we can gain a better understanding of the government's efforts to conserve endangered plant species and identify areas where more action is needed to protect these vital components of our natural heritage.
+>
+> **Source**: <https://www.farmers.gov/data/easements-download>
+
+```{r easement restoration trend, echo=TRUE, error=FALSE, message=FALSE, warning=FALSE}
+#get data
+easement_restoration <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/conservation effort/data source/Restoration trend.csv", header=TRUE, stringsAsFactors=FALSE)
+
+# Create a Shiny app
+ui <- fluidPage(sidebarPanel(selectInput(inputId = "state",
+                                         label = "Select state:",
+                                         choices = c("All", unique(easement_restoration$STATE)),
+                                         selected = "All")),
+                mainPanel(plotlyOutput(outputId = "plot")))
+
+server <- function(input, output){
+  data_filtered <- reactive({
+    if (input$state == "All"){
+      easement_restoration %>%
+        group_by(RESTORATION_FY) %>%
+        summarise(count = sum(COUNT))
+    } else {
+      easement_restoration %>%
+        filter(STATE == input$state) %>%
+        group_by(STATE, RESTORATION_FY) %>%
+        summarise(count = sum(COUNT))
+    }
+  })
+  output$plot <- renderPlotly({
+    p <- plot_ly(data_filtered(), x = ~RESTORATION_FY, y = ~count, type = 'bar')
+    p <- layout(p, title = "Restoration Count by Year and State",
+                xaxis = list(title = "Year"),
+                yaxis = list(title = "Total Count"))
+    if (input$state != "All"){
+      p <- layout(p, title = paste0("Restoration Count by Year - ", input$state))
+    }
+    p
+  })
+}
+
+shinyApp(ui, server)
+```
+
+## 3. NRCS Resources Conservation Act (RCA) government spending
+
+> **Reasoning**: NRCS's natural resources conservation programs help people reduce soil erosion, enhance water supplies, improve water quality, increase wildlife habitat, and reduce damages caused by floods and other natural disasters. Public benefits include enhanced natural resources that help sustain agricultural productivity and environmental quality while supporting continued economic development, recreation, and scenic beauty.
+>
+> Studying NRCS's natural resources conservation programs is relevant to the topic of endangered plants because these programs can help to address the root causes of endangered plant species. By addressing these issues, NRCS's programs can contribute to the protection and restoration of ecosystems that support endangered plant species. For example, by reducing soil erosion and improving water quality, NRCS's conservation programs can help to create healthy habitats for endangered plant species, which can improve their chances of survival. Additionally, by reducing the risk of natural disasters such as floods, these programs can help to prevent damage to habitats and ensure that endangered plant species have a safe and stable environment in which to thrive.
+>
+> The stacked bar chart of the Total Obligations in millions of dollars in each year by different types of fund can provide insights into the government's efforts to conserve endangered plants in the USA. Type of funds include:
+>
+> -   **Technical Assistance (TA)** refers to the scientific expertise, natural resource data, tools, and technology that USDA personnel provide to help producers, landowners, and communities develop conservation plans and implement conservation practices to solve natural resource problems at the field, operation, or larger landscape scales. NRCS is the Federal lead for providing technical assistance for USDA and does so through various programs using NRCS staff and private Technical Service Providers (TSPs).
+>
+> -   **Financial Assistance (FA)** denotes payments (cost-share payments, easement payments, rental payments, etc.) that help producers and landowners pay the costs of implementing conservation measures, which can provide both on-site and off-site conservation benefits.
+>
+> -   **Reimbursable funds** can be for Technical or Financial Assistance but are received from sources other than appropriations. They can also be transfers from other Federal agencies.
+>
+> Here are some possible reasons for analyzing this dataset:
+>
+> 1.  Trends in government spending: By looking at the stacked bar chart, you can see how much money the government has spent on conservation efforts each year and how much of that money is allocated to technical assistance, financial assistance, and reimbursable funds. Analyzing these trends over time can provide insight into the government's priorities and how they have changed over the years.
+>
+> 2.  Allocation of funds: The chart can also show how the government is allocating its conservation funds across different types of assistance. For example, if the government is allocating more funds towards financial assistance, it may indicate that they are focusing more on providing monetary assistance to conservation efforts. On the other hand, if technical assistance is receiving more funds, it may indicate that the government is providing more support and expertise to conservation efforts.
+>
+> 3.  Impact on endangered plants: Analyzing the data over time can also help identify whether the government's conservation efforts are having a positive impact on endangered plants. If there is an increase in spending and allocation of funds towards conservation efforts, it may indicate that the government is taking a more proactive approach towards protecting endangered plants.
+>
+> **Source**:<https://www.nrcs.usda.gov/rca-conservation-program-reports>
+
+```{r RCA National Convervation Program, echo=TRUE, error=FALSE, message=FALSE, warning=FALSE}
+# get data
+rca_report <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/conservation effort/data source/gs_type.csv", header=TRUE, stringsAsFactors=FALSE)
+
+#Convert string to numeric
+rca_report$year <- as.numeric(rca_report$year)
+
+#Plot
+government_spending <- highchart() %>% 
+  hc_chart(type = "column") %>%
+  hc_title(text = "NRCS Resources Conservation Act (RCA) Obligation by Type and Year") %>%
+  hc_plotOptions(column = list(stacking = "normal")) %>%
+  hc_xAxis(categories = rca_report$year) %>%
+  hc_yAxis(title = list(text = "Total Obligation (Billions of $)")) %>%
+  hc_add_series(name="Technical Assistance",
+                data = rca_report$Technical_Assistance,
+                stack = "obligation") %>%
+  hc_add_series(name="Financial Assistance",
+                data = rca_report$Financial_Assistance,
+                stack = "obligation") %>%
+  hc_add_series(name="Reimbursable",
+                data = rca_report$Reimbursable,
+                stack = "obligation") %>%
+  hc_tooltip(formatter = JS("function () {
+                              var percentage = (this.y / this.point.stackTotal) * 100;
+                              return '<b>' + this.x + '</b><br/>' +
+                              this.series.name + ': ' + Highcharts.numberFormat(this.y, 1) + ' (' + percentage.toFixed(2) + '%)<br/>' +
+                              'Total: ' + Highcharts.numberFormat(this.point.stackTotal, 1);
+                            }"))
+government_spending
+```
+
+## 4. Grassland Government Spending by State by Year
+
+> **Reasoning**: The Grassland Reserve Program (GRP) is a voluntary conservation program that emphasizes support for working grazing operations, enhancement of plant and animal biodiversity, and protection of grassland under threat of conversion to other uses.
+>
+> The Grassland Reserve Program (GRP) dataset is relevant to the topic of endangered plants and government efforts in the USA because it provides insights into the government's efforts to conserve and protect grassland habitats. Grasslands are important habitats for many species of endangered plants, and protecting these habitats is critical for their survival.
+>
+> Analyzing the trends in total obligation by year in the GRP dataset can provide insight into the effectiveness of the program in achieving its goals of conserving grasslands and enhancing biodiversity. By tracking changes in total obligations over time, we can see if the program has been successful in incentivizing landowners to participate and if the program's funding has been consistent over time. This information can help evaluate the program's impact on endangered plant species and the effectiveness of the government's efforts to protect these habitats.
+>
+> **Source**: <https://www.nrcs.usda.gov/rca-conservation-program-reports>
+
+```{r easement restoration trend, echo=TRUE, error=FALSE, message=FALSE, warning=FALSE}
+#get data
+grassland <- read.csv("/Users/annidai/Documents/GR5063/GroupC_Cruel_World_for_EndangeredPlants/conservation effort/data source/grassland_3.csv", header=TRUE, stringsAsFactors=FALSE)
+
+# Create a non-linear trend line
+line_trend <- loess(Total ~ Year, data = grassland)
+
+# Create the highchart
+grassland_spending <- highchart() %>% 
+  hc_title(text = "Grassland Reserve Program (GRP) Total Obligation by Year") %>% 
+  hc_xAxis(categories = grassland$Year) %>% 
+  hc_yAxis(title = list(text = "Total Obligation (Millions of $)")) %>% 
+  hc_add_series(data = grassland$Total, name = "Total Obligation", type = "column") %>% 
+  hc_add_series(data = fitted(line_trend), name = "Trend Line", type = "line", color = "#ff7f0e")
+
+grassland_spending
+```

@@ -1,0 +1,56 @@
+---
+title: "Cruel World for Endangered Plants - ProcessBook"
+author: "Lisa Carle, Raina Cheung, Anni Dai, Vansh Murad Kalia"
+date: "2023-05-03"
+output:
+  html_document:
+    theme:
+      bootswatch: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## I. Research & Analysis
+
+### Proposal
+
+The “Cruel World for Endangered Plants” data visualization project aims to highlight the state of endangered plants around the world. The project seeks to provide a comprehensive view of the current state of endangered plants, and the challenges they face. Through a variety of charts, graphs, and maps, the project visualizes data on plant population trends, habitat loss, causes of endangerment, hotspots of endangered species and etc. By presenting the data in a visually engaging format, we hope to raise awareness about the urgent need to protect endangered plant species and their habitats.
+
+### Brainstorming:
+
+![](img/Brainstorm.png)
+
+### Data Description:
+
+- [IUCN Redlist of Threatened Species data](https://www.iucnredlist.org/) - Established in 1964, the International Union for Conservation of Nature’s Red List of Threatened Species has evolved to become the world’s most comprehensive information source on the global extinction risk status of animal, fungus and plant species.
+- [Global Biodiversity Information Facility](https://www.gbif.org/) - A free and open access data infrastructure containing data about all types of life on earth
+- [Acres Receiving Conservation Programs](https://www.nrcs.usda.gov/resources/data-and-reports/rca-data-viewer) - US Natural Resources and Conservation Service's data on dataset on Acres Receiving Conservation through NRCS programs
+- [Easement Restoration Program](https://www.farmers.gov/data/easements-download) - The Easement Restoration Program is a conservation program that provides financial and technical assistance to private landowners to restore and protect wetlands, grasslands, and other habitats on their property. 
+- [NRCS Resources Conservation Act (RCA) Government Spending](https://www.nrcs.usda.gov/rca-conservation-program-reports) - Data summarizing NRCS conservation program activity
+- [New York Times API](https://developer.nytimes.com/apis) - Source to connect to NYT article data
+
+### Proposed Techniques: 
+
+Data wrangling will be a key technique for our project as we'll have to import data using the Redlist API and then set the parameters appropriately for our needs. Considering we're also planning to us multiple datasets together, Data wrangling technqiues will be necessary to link them together. 
+We also hope to use some Network analysis techniques and test relationships between our variables of interest. Using map-plotting techniques using various packages would also be.Finally, we'd also like to test using some animations or interactive charting techniques to show overtime changes in our data and variables of interest.
+
+### Proposed Visualizations:
+
+- Heatmap
+- Time Series Charts
+- Interactive Global Maps
+
+
+## II. Development 
+
+Unfortunately, we were unable to use the IUCN Red List data due to staffing changes at the IUCN. We had made multiple attempts to request the API token, and eventually got that response from someone on their team. Luckily, we were able to pull data from the GBIF. The GBIF data we pulled also contained IUCN endangerment category levels for all observations, so we could still create the storyline we wanted to.
+
+### Vision 
+
+After receiving feedback of our proposal, we knew we needed to expand the scope of our project to include a component of analyzing current efforts being made to preserve plant species. So, we started considering other relationships we wanted to observe in tangent to the trends of endangered plants within the US. 
+
+![](img/ProjectVision.png)
+
+

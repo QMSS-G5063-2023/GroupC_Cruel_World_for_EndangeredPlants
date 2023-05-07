@@ -1,0 +1,137 @@
+---
+title: "Final"
+author: "Lisa Carle"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+### Importing packages and Reading in Data
+library(tidyverse)
+library(tm)
+library(quanteda)
+library(tidytext)
+library(readr)
+library(dplyr)
+library(devtools)
+library(rgdal)
+library(stringr)
+library(ggmap)
+library(readr)
+library(RColorBrewer)
+library(htmlwidgets)
+library(leaflet)
+library(ggplot2)
+library(plotly)
+library(usmap)
+library(colorspace)
+library(leafgl)
+library(sf)
+library(spatialEco)
+
+endangered_species_og <- read.csv('../IUCN_final.csv')
+
+```
+
+```{r}
+### Exploring data
+class(endangered_species_og$decimalLatitude)
+class(endangered_species_og$decimalLongitude)
+
+names(endangered_species_og)
+
+unique(endangered_species_og$iucn_category)
+unique(endangered_species_og$taxonRank)
+
+endangered_species %>%
+  count(stateProvince)
+```
+
+```{r}
+### Cleaning dataframe for points exclusively in mainland US
+endangered_species <- endangered_species_og %>%
+  filter(between(abs(decimalLatitude), 24, 49) & between(abs(decimalLongitude), 66, 124)) %>%
+  filter(between(year, 2005, 2022)) %>%
+  select(-c("X", "X.1","X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9", "X.10", "X.11", "X.12", "X.13", "X.14", "X.15", "X.16", "X.17", "X.18", "X.19", "X.20", "X.21", "X.22", "X.23", "X.24", "X.25", "X.26", "X.27", "X.28", "X.29", "X.30", "X.31", "X.32", "X.33", "X.34", "X.35", "X.36", "X.37", "X.38", "X.39", "X.40", "X.41", "X.42", "X.43", "X.44", "X.45", "X.46" ))
+
+```
+
+```{r}
+### Endangered_species data broken up by year
+endangered_species_2005 <- endangered_species %>%
+  filter(year == 2005)
+```
+
+```{r}
+### Establishing color palette for the IUCN Categories
+pal <- colorFactor(palette = hcl.colors(5, 'Fall'), 
+                   domain = endangered_species$iucn_category)
+
+color_iucn <- pal(endangered_species$iucn_category)
+```
+
+
+```{r}
+### Creating point data of endangered species layered by year, distinguished by IUCN category
+map <- leaflet() %>%
+  addTiles('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png') %>%
+  addCircleMarkers(group = "2005",
+             data = subset(endangered_species, year == 2005), 
+             lng = ~decimalLongitude, lat = ~decimalLatitude,
+             weight = 1, color = color_iucn, clusterOptions = TRUE, 
+             popup = paste("Species: ", endangered_species$species, "<br/>",
+                           "IUCN Category: ", endangered_species$iucn_category)) %>%
+  addLegend(pal = pal, values = endangered_species$iucn_category, title = "IUCN Category") 
+
+map
+
+```
+
+ addCircles(group = "2009 - 2012",
+             data = subset(endangered_species, year >= 2009 & year < 2013 ),
+             lng = ~decimalLongitude, lat = ~decimalLatitude,
+             weight = 1, color = color_iucn) %>%
+  addCircles(group = "2013 - 2016",
+             data = subset(endangered_species, year >= 2012 & year < 2017),
+             lng = ~decimalLongitude, lat = ~decimalLatitude,
+             weight = 1, color = color_iucn) %>%
+  addCircles(group = "2017 - 2020",
+             data = subset(endangered_species, year >= 2017 & year < 2021),
+             lng = ~decimalLongitude, lat = ~decimalLatitude,
+             weight = 1, color = color_iucn) %>%
+  addCircles(group = "2021 - 2022",
+             data = subset(endangered_species, year >= 2021),
+             lng = ~decimalLongitude, lat = ~decimalLatitude,
+             weight = 1, color = color_iucn) %>%
+ addLayersControl(overlayGroups = c('2005 - 2008', '2009 - 2012', '2013 - 2016', '2017 - 2020', '2021 - 2022'),
+                   options = layersControlOptions(collapsed = TRUE))
+
+```{r}
+### Creating Choropleth Map showing the count of endangered species in each state
+
+### Pulling in US Shapefile
+us_shp <- readOGR(dsn = "../cb_2018_us_state_500k/cb_2018_us_state_500K.shp")
+
+### Converting endangered_species into sp 
+coords <- endangered_species[ ,c("decimalLatitude", "decimalLongitude")]
+data <- endangered_species [ , c("species", "scientificName", "year", "iucn_category")]
+crs <- CRS("+init=epsg:4326")
+
+endangered_spdf <- SpatialPointsDataFrame(coords = coords,
+                                          data = data,
+                                          proj4string = crs)
+
+### Merging spatial dataframes
+merged_spdf <- st_join(endangered_spdf@coords, us_shp@polygons)
+
+### First aggregating data 
+endangered_species_agg <- endangered_species %>%
+  group_by(year, species) %>%
+  summarise(total_species_count_by_year = n()) %>%
+  ungroup()
+```
+
