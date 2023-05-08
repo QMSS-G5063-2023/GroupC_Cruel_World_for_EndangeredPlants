@@ -42,7 +42,8 @@ There are 6 datasets used:
 
 
 ## Process Book
-![Process Book](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/ProcessBook.html) *To open Process Book, please click the download button at the top right of the screen.*
+![Process Book](https://github.com/QMSS-G5063-2023/GroupC_Cruel_World_for_EndangeredPlants/blob/main/ProcessBook.html) 
+*To open Process Book, please click the download button at the top right of the screen.*
 
 ## Names and E-mails of all members: 
 
